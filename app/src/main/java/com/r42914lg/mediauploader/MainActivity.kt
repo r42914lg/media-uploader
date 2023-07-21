@@ -1,5 +1,6 @@
 package com.r42914lg.mediauploader
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,9 +13,16 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import com.r42914lg.mediauploader.data.local.LocalRepoTest
+import com.r42914lg.mediauploader.data.remote.RemoteApiTestImpl
+import com.r42914lg.mediauploader.data.remote.RemoteDataSource
 import com.r42914lg.mediauploader.sender.Sender
 import com.r42914lg.mediauploader.ui.theme.MediaUploaderTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +33,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    ContentPicker() {}
+                    ContentPicker {
+                        lifecycleScope.launch {
+                            val res = Sender(
+                                ctx = application,
+                                dao = RemoteDataSource(RemoteApiTestImpl()),
+                                localUriRepo = LocalRepoTest(),
+                                uploadScope = CoroutineScope(SupervisorJob()),
+                                cleanUpScope = CoroutineScope(Job()),
+                            ).send(it)
+                            println("Bucket result = $res")
+                        }
+                    }
                 }
             }
         }
@@ -34,14 +53,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ContentPicker(
-    onNavigateToViewer: () -> Unit,
+    onContentSelected: (List<Uri>) -> Unit,
 ) {
-    val ctx = LocalContext.current
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents(),
     ) {
-        Sender(ctx).send(it)
-        onNavigateToViewer()
+        onContentSelected(it)
     }
 
     Button(onClick = {

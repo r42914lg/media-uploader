@@ -1,5 +1,6 @@
 package com.r42914lg.mediauploader.sender
 
+import android.net.Uri
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -7,9 +8,10 @@ import okio.BufferedSink
 import java.io.InputStream
 
 class UploadStreamRequestBody(
+    private val uri: Uri,
     private val mediaType: String,
     private val inputStream: InputStream,
-    private val onUploadProgress: (Int) -> Unit,
+    private val onUploadProgress: (Uri, Int) -> Unit,
 ) : RequestBody() {
 
     override fun contentLength(): Long = inputStream.available().toLong()
@@ -25,7 +27,7 @@ class UploadStreamRequestBody(
             while (inputStream.read(buffer).also { read = it } != -1) {
                 sink.write(buffer, 0, read)
                 uploaded += read
-                onUploadProgress((100 * uploaded / contentLength).toInt())
+                onUploadProgress(uri, (100 * uploaded / contentLength).toInt())
             }
         }
     }

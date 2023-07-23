@@ -33,20 +33,37 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    ContentPicker {
-                        lifecycleScope.launch {
-                            val res = Sender(
-                                ctx = application,
-                                dao = RemoteDataSource(RemoteApiTestImpl()),
-                                localUriRepo = LocalRepoTest(),
-                                uploadScope = CoroutineScope(SupervisorJob()),
-                                cleanUpScope = CoroutineScope(Job()),
-                            ).send(it)
-                            println("Bucket result = $res")
-                        }
-                    }
+                    ContentPicker(
+                        onContentSelected = ::sendAsync
+                    )
                 }
             }
+        }
+    }
+
+    private fun sendAsync(uris: List<Uri>) {
+        lifecycleScope.launch {
+            val res = Sender(
+                ctx = application,
+                dao = RemoteDataSource(RemoteApiTestImpl()),
+                localUriRepo = LocalRepoTest(),
+                uploadScope = CoroutineScope(SupervisorJob()),
+                cleanUpScope = CoroutineScope(Job()),
+            ).send(uris)
+            println("Bucket result = $res")
+        }
+    }
+
+    private fun sendViaWorker(uris: List<Uri>) {
+        lifecycleScope.launch {
+            val res = Sender(
+                ctx = application,
+                dao = RemoteDataSource(RemoteApiTestImpl()),
+                localUriRepo = LocalRepoTest(),
+                uploadScope = CoroutineScope(SupervisorJob()),
+                cleanUpScope = CoroutineScope(Job()),
+            ).send(uris)
+            println("Bucket result = $res")
         }
     }
 }
